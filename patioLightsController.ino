@@ -3,22 +3,36 @@
 #include "RGBColor.h"
 #include <stdlib.h>
 
-#define NUMBER_OF_STRIPS 1 // 1 for testing
+#define NUMBER_OF_STRIPS 2 // 1 for testing
 
 // Configuration
-#define BRIGHTNESS 40
+#define BRIGHTNESS 10
 #define BAUD_RATE 115200
 
-#define STRIP1_STARTINDEX 0
-#define STRIP1_LENGTH 30
-const int STRIP1_PIN = D6;
+struct StripData {
+	bool isFront; // determines if the strip uses the front data
+	int startIndex; // the starting index of the strips color data
+	int length; // the length of the strip
+	bool mirrored; // is the strip mirrored? normally pin # increments from left to right
+	int pin; // the pin that the strip is connected to
+};
 
-#define LED_COUNT_FRONT 30
+// front left strand (mirrored)
+StripData strips[NUMBER_OF_STRIPS] = {
+	{ true, 0, 15, true, D7 },
+	{ true, 15, 30, false, D6 }
+};
+// { true, 0, 128, true, D6 },
+// { true, 128, 119, false, D7 }
 
+#define LED_COUNT_FRONT 247
+#define LED_COUNT_BACK 1
 
-Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(STRIP1_LENGTH, STRIP1_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel NeoPixels[NUMBER_OF_STRIPS];
+//= Adafruit_NeoPixel(STRIP1_LENGTH, STRIP1_PIN, NEO_GRB + NEO_KHZ800);
 
 RGBColor frontColors[LED_COUNT_FRONT];
+RGBColor backColors[LED_COUNT_BACK];
 
 char pattern;
 char action;
@@ -35,13 +49,16 @@ void setup()
 {
 	Serial.begin(BAUD_RATE);
 	Serial.println("Start");
-	strip1.setBrightness(BRIGHTNESS);
-	strip1.begin();
-	//strip1.setPixelColor(1, 255, 255, 255);
-	//strip1.show();
+	// initialize the strips
+	for (int i = 0; i < NUMBER_OF_STRIPS; i++)
+	{
+		NeoPixels[i] = Adafruit_NeoPixel(strips[i].length, strips[i].pin, NEO_GRB + NEO_KHZ800);
+		NeoPixels[i].setBrightness(BRIGHTNESS);
+		NeoPixels[i].begin();
+	}
 
 	//pattern = PATTERN_SCROLL;
-	pattern = PATTERN_SCROLLSMOOTH;
+	pattern = PATTERN_SCROLL;
 	color1 = RGBColor(255,255,0);
 	color2 = RGBColor(0, 0, 0);
 	delayAnimationSpeed = 150;
@@ -194,11 +211,45 @@ void loop()
 	// update all strips at once, not as they are computed
 
 	// update the strips
-	for (int i = STRIP1_STARTINDEX; i < STRIP1_LENGTH; i++)
+	for (int i = 0; i < NUMBER_OF_STRIPS; i++)
+	{
+		/*if (strips[i].isFront)
+		{
+			NeoPixels[i].setPixelColor()
+		}
+		else
+		{
+			NeoPixels[i].setPixelColor()
+		}*/
+		int initial;
+		int total = strips[i].length * s + strips[i].startIndex;
+		/*Serial.print("Strip");
+		Serial.print(strips[i].isFront);
+		Serial.print(strips[i].length);
+		Serial.print(strips[i].mirrored);
+		Serial.print(strips[i].pin);
+		Serial.print(strips[i].startIndex);
+		Serial.println("");*/
+		for (int c = initial; c < total; c++)
+		{
+			if (!strips[i].isFront)
+			{
+				int index = c - strips[i].startIndex;
+				NeoPixels[i].setPixelColor(index, frontColors[index].getR(), frontColors[index].getG(), frontColors[index].getB());
+			}
+			else
+			{
+				int index = c - strips[i].startIndex;
+				NeoPixels[i].setPixelColor(index, backColors[index].getR(), backColors[index].getG(), backColors[index].getB());
+			}
+		}
+		NeoPixels[i].show();
+	}
+	/*for (int i = STRIP1_STARTINDEX; i < STRIP1_LENGTH; i++)
 	{
 		strip1.setPixelColor(i, frontColors[i].getR(), frontColors[i].getG(), frontColors[i].getB());
 	}
-	strip1.show();
+	strip1.show();*/
 }
 
 
