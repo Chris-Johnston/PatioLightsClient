@@ -3,10 +3,10 @@
 #include "RGBColor.h"
 #include <stdlib.h>
 
-#define NUMBER_OF_STRIPS 2 // 1 for testing
+#define NUMBER_OF_STRIPS 4 // 1 for testing
 
 // Configuration
-#define BRIGHTNESS 10
+#define BRIGHTNESS 100
 #define BAUD_RATE 115200
 
 struct StripData {
@@ -19,14 +19,24 @@ struct StripData {
 
 // front left strand (mirrored)
 StripData strips[NUMBER_OF_STRIPS] = {
-	{ true, 0, 15, true, D7 },
-	{ true, 15, 30, false, D6 }
+	{ true, 0, 128, true, 7 },
+	{ true, 128, 119, false, 6 },
+	{ true, 0, 150, true, 8},
+	{ true, 150, 210, false, 9}
+
+	/*{ true, 0, 128, true, 7 },
+	{ true, 128, 119, false, 6 },*/
+	/*{ false, 0, 15, true, 8 },
+	{ false, 15, 15, false, 9 }*/
 };
 // { true, 0, 128, true, D6 },
 // { true, 128, 119, false, D7 }
 
-#define LED_COUNT_FRONT 247
-#define LED_COUNT_BACK 1
+//#define LED_COUNT_FRONT 247
+#define LED_COUNT_FRONT 360
+#define LED_COUNT_BACK 360
+//#define LED_COUNT_FRONT 247
+//#define LED_COUNT_BACK 360
 
 Adafruit_NeoPixel NeoPixels[NUMBER_OF_STRIPS];
 //= Adafruit_NeoPixel(STRIP1_LENGTH, STRIP1_PIN, NEO_GRB + NEO_KHZ800);
@@ -59,8 +69,8 @@ void setup()
 
 	//pattern = PATTERN_SCROLL;
 	pattern = PATTERN_SCROLL;
-	color1 = RGBColor(255,255,0);
-	color2 = RGBColor(0, 0, 0);
+	color1 = RGBColor(255,0,0); //255 185 0
+	color2 = RGBColor(0, 0, 0); // 255 00 255
 	delayAnimationSpeed = 150;
 	delayHold = 0;
 }
@@ -211,7 +221,7 @@ void loop()
 	// update all strips at once, not as they are computed
 
 	// update the strips
-	for (int i = 0; i < NUMBER_OF_STRIPS; i++)
+	for (int stripNumber = 0; stripNumber < NUMBER_OF_STRIPS && strips[stripNumber].isFront; stripNumber++)
 	{
 		/*if (strips[i].isFront)
 		{
@@ -221,8 +231,8 @@ void loop()
 		{
 			NeoPixels[i].setPixelColor()
 		}*/
-		int initial;
-		int total = strips[i].length * s + strips[i].startIndex;
+		int initial =strips[stripNumber].startIndex;
+		int total = strips[stripNumber].length + strips[stripNumber].startIndex;
 		/*Serial.print("Strip");
 		Serial.print(strips[i].isFront);
 		Serial.print(strips[i].length);
@@ -230,20 +240,37 @@ void loop()
 		Serial.print(strips[i].pin);
 		Serial.print(strips[i].startIndex);
 		Serial.println("");*/
-		for (int c = initial; c < total; c++)
+		for (int c = 0; c < strips[stripNumber].length; c++)
 		{
-			if (!strips[i].isFront)
+			if (strips[stripNumber].isFront)
 			{
-				int index = c - strips[i].startIndex;
-				NeoPixels[i].setPixelColor(index, frontColors[index].getR(), frontColors[index].getG(), frontColors[index].getB());
+				if (!strips[stripNumber].mirrored)
+				{
+					int index = c + strips[stripNumber].startIndex;
+					NeoPixels[stripNumber].setPixelColor(c, frontColors[index].getR(), frontColors[index].getG(), frontColors[index].getB());
+				}
+				else
+				{
+					int index = strips[stripNumber].length - c + strips[stripNumber].startIndex;
+					NeoPixels[stripNumber].setPixelColor(c, frontColors[index].getR(), frontColors[index].getG(), frontColors[index].getB());
+				}
 			}
 			else
 			{
-				int index = c - strips[i].startIndex;
-				NeoPixels[i].setPixelColor(index, backColors[index].getR(), backColors[index].getG(), backColors[index].getB());
+				if (!strips[stripNumber].mirrored)
+				{
+					int index = c + strips[stripNumber].startIndex;
+					NeoPixels[stripNumber].setPixelColor(c, backColors[index].getR(), backColors[index].getG(), backColors[index].getB());
+				}
+				else
+				{
+					int index = strips[stripNumber].length - c + strips[stripNumber].startIndex;
+					NeoPixels[stripNumber].setPixelColor(c, backColors[index].getR(), backColors[index].getG(), backColors[index].getB());
+				}
 			}
+			
 		}
-		NeoPixels[i].show();
+		NeoPixels[stripNumber].show();
 	}
 	/*for (int i = STRIP1_STARTINDEX; i < STRIP1_LENGTH; i++)
 	{
@@ -276,6 +303,18 @@ void pattern_blink()
 			frontColors[i] = color2;
 		}
 	}
+
+	for (int i = 0; i < LED_COUNT_BACK; i++)
+	{
+		if (blinkToggle)
+		{
+			backColors[i] = color1;
+		}
+		else
+		{
+			backColors[i] = color2;
+		}
+	}
 }
 
 void pattern_solidColor()
@@ -283,6 +322,12 @@ void pattern_solidColor()
 	for (int i = 0; i < LED_COUNT_FRONT; i++)
 	{
 		frontColors[i] = color1;
+		//strip1.setPixelColor(i, color1.getR(), color1.getG(), color1.getB());
+	}
+
+	for (int i = 0; i < LED_COUNT_BACK; i++)
+	{
+		backColors[i] = color1;
 		//strip1.setPixelColor(i, color1.getR(), color1.getG(), color1.getB());
 	}
 }
@@ -308,6 +353,11 @@ void pattern_pulse()
 	{
 		//strip1.setPixelColor(i, r, g, b);
 		frontColors[i] = RGBColor(r, g, b);
+	}
+
+	for (int i = 0; i < LED_COUNT_BACK; i++)
+	{
+		backColors[i] = RGBColor(r, g, b);
 	}
 }
 
@@ -353,6 +403,18 @@ void pattern_scrollsmooth()
 
 		//strip1.setPixelColor(i, r, g, b);
 		frontColors[i] = RGBColor(r, g, b);
+	}
+
+	for (int i = 0; i < LED_COUNT_BACK; i++)
+	{
+		double scaleA = abs(sin(PI * 2 + PI / 2 + PI / LED_COUNT_FRONT * i + millis() / delayAnimationSpeed));
+		double scaleB = abs(sin(PI * 2 + PI / LED_COUNT_FRONT * i + millis() / delayAnimationSpeed));
+		int r = bounds(color1.getR() * scaleA + color2.getR() * scaleB);
+		int g = bounds(color1.getG() * scaleA + color2.getG() * scaleB);
+		int b = bounds(color1.getB() * scaleA + color2.getB() * scaleB);
+
+		//strip1.setPixelColor(i, r, g, b);
+		backColors[i] = RGBColor(r, g, b);
 	}
 }
 
