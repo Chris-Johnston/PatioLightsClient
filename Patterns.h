@@ -31,17 +31,17 @@
 // todo have two delay values, one for animation speed and hold time
 
 // set all lights to a color for a specified amount of time
-#define ACTION_SETCOLOR 'A'
-// fade all lights to a color for a specified amount of time
-#define ACTION_FADECOLOR 'B'
-// flash lights
-#define ACTION_FLASH 'C'
-// wipe left
-#define ACTION_WIPELEFT 'D'
-// wipe right
-#define ACTION_WIPERIGHT 'E'
-// center wipe
-#define ACTION_WIPECENTER 'F'
+//#define ACTION_SETCOLOR 'A'
+//// fade all lights to a color for a specified amount of time
+//#define ACTION_FADECOLOR 'B'
+//// flash lights
+//#define ACTION_FLASH 'C'
+//// wipe left
+//#define ACTION_WIPELEFT 'D'
+//// wipe right
+//#define ACTION_WIPERIGHT 'E'
+//// center wipe
+//#define ACTION_WIPECENTER 'F'
 
 // presets
 // custom patterns that follow the pattern
