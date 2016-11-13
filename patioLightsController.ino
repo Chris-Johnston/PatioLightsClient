@@ -6,7 +6,7 @@
 #define NUMBER_OF_STRIPS 2 
 
 // Configuration
-#define BRIGHTNESS 10
+#define BRIGHTNESS 30
 #define BAUD_RATE 115200
 
 struct StripData {
@@ -55,12 +55,12 @@ void setup()
 	}
 
 	//pattern = PATTERN_SCROLL;
-	pattern = PATTERN_LARSON;
-	color1 = RGBColor(255,255,0); //255 185 0
-	color2 = RGBColor(255, 0, 255); // 255 00 255
-	delayAnimationSpeed = 150;
+	pattern = PATTERN_SCROLLSMOOTH;
+	color1 = RGBColor(255,0,0); //255 185 0
+	color2 = RGBColor(0, 0, 255); // 255 00 255
+	delayAnimationSpeed = 250;
 	delayHold = 0;
-	width = 15;
+	width = 30;
 }
 
 void getSerialData()
@@ -298,8 +298,8 @@ void pattern_scrollsmooth()
 	// where pattern_scroll used modulus, scrollsmooth uses sin waves
 	for (int i = 0; i < LED_COUNT; i++)
 	{
-		double scaleA = abs(sin(PI * 2 + PI / 2 + PI / LED_COUNT * i + millis() / delayAnimationSpeed));
-		double scaleB = abs(sin(PI * 2 + PI / LED_COUNT * i + millis() / delayAnimationSpeed));
+		double scaleA = abs(sin(PI / 2 + 2*PI * i / (double)width + millis() / delayAnimationSpeed));
+		double scaleB = abs(sin(2* PI * i / (double)width + millis() / delayAnimationSpeed));
 		int r = bounds(color1.getR() * scaleA + color2.getR() * scaleB);
 		int g = bounds(color1.getG() * scaleA + color2.getG() * scaleB);
 		int b = bounds(color1.getB() * scaleA + color2.getB() * scaleB);
@@ -429,9 +429,9 @@ void preset_redWhiteBlue()
 	int r, g, b;
 	for (int i = 0; i < LED_COUNT; i++)
 	{
-		double scale3 = abs(pow(sin(PI * 2 + PI / 3 + PI / LED_COUNT * i + millis() / delayAnimationSpeed), 3));
-		double scale2 = abs(pow(sin(PI * 2 + PI * 2 / 3 + PI / LED_COUNT * i + millis() / delayAnimationSpeed), 3));
-		double scale1 = abs(pow(sin(PI * 2 + PI / LED_COUNT * i + millis() / delayAnimationSpeed), 3));
+		double scale3 = abs(pow(sin(PI * 2 + PI / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
+		double scale2 = abs(pow(sin(PI * 2 + PI * 2 / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
+		double scale1 = abs(pow(sin(PI * 2 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
 		r = bounds(255 * scale1 + 255 * scale2);
 		g = bounds(255 * scale2);
 		b = bounds(255 * scale2 + 255 * scale3);
