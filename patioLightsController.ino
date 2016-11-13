@@ -6,7 +6,7 @@
 #define NUMBER_OF_STRIPS 2 
 
 // Configuration
-#define BRIGHTNESS 30
+#define BRIGHTNESS 100
 #define BAUD_RATE 115200
 
 struct StripData {
@@ -17,14 +17,14 @@ struct StripData {
 };
 
 StripData strips[NUMBER_OF_STRIPS] = {
-	/*{ 0, 128, true, 7 },
-	{ 128, 119, false, 6 }*/
+	{ 0, 128, true, 7 },
+	{ 128, 119, false, 6 }
 
-	{0, 15, true, D7 },
-	{ 15, 15, false, D6 }
+	/*{0, 15, true, D7 },
+	{ 15, 15, false, D6 }*/
 };
-//#define LED_COUNT_FRONT 247
-#define LED_COUNT 30
+#define LED_COUNT 247
+//#define LED_COUNT 30
 
 Adafruit_NeoPixel NeoPixels[NUMBER_OF_STRIPS];
 //= Adafruit_NeoPixel(STRIP1_LENGTH, STRIP1_PIN, NEO_GRB + NEO_KHZ800);
@@ -55,12 +55,12 @@ void setup()
 	}
 
 	//pattern = PATTERN_SCROLL;
-	pattern = PATTERN_SCROLLSMOOTH;
+	pattern = PATTERN_LARSON;
 	color1 = RGBColor(255,0,0); //255 185 0
-	color2 = RGBColor(0, 0, 255); // 255 00 255
-	delayAnimationSpeed = 250;
+	color2 = RGBColor(0, 0, 0); // 255 00 255
+	delayAnimationSpeed = 1250;
 	delayHold = 0;
-	width = 30;
+	width = 5;
 }
 
 void getSerialData()
