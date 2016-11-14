@@ -12,8 +12,8 @@ public:
 	int getB();
 private:
 	int clampBounds(int);
-	int r;
-	int g;
-	int b;
+	char r;
+	char g;
+	char b;
 };
 

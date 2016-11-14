@@ -9,24 +9,24 @@ RGBColor::RGBColor()
 
 RGBColor::RGBColor(int red, int green, int blue)
 {
-	r = clampBounds(red);
-	g = clampBounds(green);
-	b = clampBounds(blue);
+	r = (char)clampBounds(red);
+	g = (char)clampBounds(green);
+	b = (char)clampBounds(blue);
 }
 
 int RGBColor::getR()
 {
-	return r;
+	return (int)r;
 }
 
 int RGBColor::getG()
 {
-	return g;
+	return (int)g;
 }
 
 int RGBColor::getB()
 {
-	return b;
+	return (int)b;
 }
 
 RGBColor::~RGBColor()

@@ -2,11 +2,15 @@
 #include "Patterns.h"
 #include "RGBColor.h"
 #include <stdlib.h>
+//#include "Arduino.h"
+
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
 
 #define NUMBER_OF_STRIPS 2 
 
 // Configuration
-#define BRIGHTNESS 100
+#define BRIGHTNESS 10
 #define BAUD_RATE 115200
 
 struct StripData {
@@ -23,6 +27,7 @@ StripData strips[NUMBER_OF_STRIPS] = {
 	/*{0, 15, true, D7 },
 	{ 15, 15, false, D6 }*/
 };
+//#define LED_COUNT 247
 #define LED_COUNT 247
 //#define LED_COUNT 30
 
@@ -40,12 +45,13 @@ double delayHold;
 bool actionRunning;
 int width;
 
-String serialBuffer = "";
+char serialBuffer[30];
 
 void setup()
 {
 	Serial.begin(BAUD_RATE);
 	Serial.println("Start");
+
 	// initialize the strips
 	for (int i = 0; i < NUMBER_OF_STRIPS; i++)
 	{
@@ -69,45 +75,54 @@ void getSerialData()
 	if (Serial.available() > 0)
 	{
 		// set the buffer to the next line of input
-		serialBuffer = Serial.readStringUntil('\n');
+		//serialBuffer = Serial.readStringUntil('\n');
+		Serial.readBytesUntil('\n', serialBuffer, 30);
 		Serial.flush();
 
-		int indexStart = serialBuffer.indexOf(START_OF_MESSAGE);
+		/*int indexStart = serialBuffer.indexOf(START_OF_MESSAGE);
 		int indexEnd = serialBuffer.indexOf(END_OF_MESSAGE);
 		int stripNumToChange = 0;
 
 		if (indexStart != -1 &&
 			indexEnd != -1 &&
-			indexStart < indexEnd)
+			indexStart < indexEnd)*/
+		if(serialBuffer[0] == START_OF_MESSAGE[0])
 		{
 			// message contains all of the data
-			String message = serialBuffer.substring(indexStart + String(START_OF_MESSAGE).length(), indexEnd);
-			// serialBuffer starts at the end of the old buffer
-			//serialBuffer = serialBuffer.substring(indexEnd, serialBuffer.length() - 1);
-			//Serial.flush();
-			//Serial.println(message);
-			// parse data
-			//Serial.print("Pattern");
-			pattern = message.charAt(0);
+			//serialBuffer = serialBuffer.substring(indexStart + String(START_OF_MESSAGE).length(), indexEnd);
+			for (int i = 0; i < 25; i++)
+			{
+				serialBuffer[i] = serialBuffer[i + 5];
+			}
+
+			//pattern = serialBuffer.charAt(0);
+			pattern = serialBuffer[0];
 			action = pattern;
 			//Serial.println(pattern);
-			int r = message.substring(1, 4).toInt();
-			int g = message.substring(4, 7).toInt();
-			int b = message.substring(7, 10).toInt();
-			int r2 = message.substring(10, 13).toInt();
-			int g2 = message.substring(13, 16).toInt();
-			int b2 = message.substring(16, 19).toInt();
-			/*Serial.println(r);
-			Serial.println(g);
-			Serial.println(b);
-			Serial.println(r2);
-			Serial.println(g2);
-			Serial.println(b2);*/
+
+			/*int r = serialBuffer.substring(1, 4).toInt();
+			int g = serialBuffer.substring(4, 7).toInt();
+			int b = serialBuffer.substring(7, 10).toInt();
+			int r2 = serialBuffer.substring(10, 13).toInt();
+			int g2 = serialBuffer.substring(13, 16).toInt();
+			int b2 = serialBuffer.substring(16, 19).toInt();*/
+			int r = ((String)"" + serialBuffer[1] + serialBuffer[2] + serialBuffer[3]).toInt();
+			int g = ((String)"" + serialBuffer[4] + serialBuffer[5] + serialBuffer[6]).toInt();
+			int b = ((String)"" + serialBuffer[7] + serialBuffer[8] + serialBuffer[9]).toInt();
+
+			int r2 = ((String)"" + serialBuffer[10] + serialBuffer[11] + serialBuffer[12]).toInt();
+			int g2 = ((String)"" + serialBuffer[13] + serialBuffer[14] + serialBuffer[15]).toInt();
+			int b2 = ((String)"" + serialBuffer[16] + serialBuffer[17] + serialBuffer[18]).toInt();
+
+
 			color1 = RGBColor(r, g, b);
 			color2 = RGBColor(r2, g2, b2);
-			delayAnimationSpeed = message.substring(19, 23).toInt();
-			delayHold = message.substring(23, 27).toInt();
-			width = message.substring(27, 30).toInt();
+			//delayAnimationSpeed = serialBuffer.substring(19, 23).toInt();
+			delayAnimationSpeed = ((String)"" + serialBuffer[19] + serialBuffer[20] + serialBuffer[21] + serialBuffer[22]).toInt();
+			//delayHold = serialBuffer.substring(23, 27).toInt();
+			delayHold = ((String)"" + serialBuffer[23] + serialBuffer[24] + serialBuffer[25] + serialBuffer[26]).toInt();
+			//width = serialBuffer.substring(27, 30).toInt();
+			delayAnimationSpeed = ((String)"" + serialBuffer[27] + serialBuffer[28] + serialBuffer[29]).toInt();
 		}
 	}
 }
@@ -300,9 +315,9 @@ void pattern_scrollsmooth()
 	{
 		double scaleA = abs(sin(PI / 2 + 2*PI * i / (double)width + millis() / delayAnimationSpeed));
 		double scaleB = abs(sin(2* PI * i / (double)width + millis() / delayAnimationSpeed));
-		int r = bounds(color1.getR() * scaleA + color2.getR() * scaleB);
-		int g = bounds(color1.getG() * scaleA + color2.getG() * scaleB);
-		int b = bounds(color1.getB() * scaleA + color2.getB() * scaleB);
+		char r = (char)bounds(color1.getR() * scaleA + color2.getR() * scaleB);
+		char g = (char)bounds(color1.getG() * scaleA + color2.getG() * scaleB);
+		char b = (char)bounds(color1.getB() * scaleA + color2.getB() * scaleB);
 
 		//strip1.setPixelColor(i, r, g, b);
 		colors[i] = RGBColor(r, g, b);
@@ -426,15 +441,15 @@ void action_wipeCenter()
 
 void preset_redWhiteBlue()
 {
-	int r, g, b;
+	char r, g, b;
 	for (int i = 0; i < LED_COUNT; i++)
 	{
 		double scale3 = abs(pow(sin(PI * 2 + PI / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
 		double scale2 = abs(pow(sin(PI * 2 + PI * 2 / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
 		double scale1 = abs(pow(sin(PI * 2 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
-		r = bounds(255 * scale1 + 255 * scale2);
-		g = bounds(255 * scale2);
-		b = bounds(255 * scale2 + 255 * scale3);
+		r = (char)bounds(255 * scale1 + 255 * scale2);
+		g = (char)bounds(255 * scale2);
+		b = (char)bounds(255 * scale2 + 255 * scale3);
 		colors[i] = RGBColor(r, g, b);
 	}
 }
