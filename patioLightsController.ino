@@ -3,8 +3,8 @@
 #include "RGBColor.h"
 #include <stdlib.h>
 
-#include <pgmStrToRAM.h>
-#include <MemoryFree.h>
+//#include <pgmStrToRAM.h>
+//#include <MemoryFree.h>
 
 //#include "Arduino.h"
 
