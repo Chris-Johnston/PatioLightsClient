@@ -2,6 +2,10 @@
 #include "Patterns.h"
 #include "RGBColor.h"
 #include <stdlib.h>
+
+#include <pgmStrToRAM.h>
+#include <MemoryFree.h>
+
 //#include "Arduino.h"
 
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -27,14 +31,31 @@ StripData strips[NUMBER_OF_STRIPS] = {
 	/*{0, 15, true, D7 },
 	{ 15, 15, false, D6 }*/
 };
-//#define LED_COUNT 247
+
 #define LED_COUNT 247
-//#define LED_COUNT 30
+#define ARR_LEN 741 // led count * 3
 
 Adafruit_NeoPixel NeoPixels[NUMBER_OF_STRIPS];
 //= Adafruit_NeoPixel(STRIP1_LENGTH, STRIP1_PIN, NEO_GRB + NEO_KHZ800);
 
-RGBColor colors[LED_COUNT];
+//RGBColor colors[LED_COUNT];
+uint8_t colors[ARR_LEN]; // r g b for each val
+
+void setColor(int i, int r, int g, int b)
+{
+	int index = min(i, ARR_LEN) * 3;
+	colors[index] = bounds(r);
+	colors[index + 1] = bounds(g);
+	colors[index + 2] = bounds(b);
+}
+
+void setColor(int i, RGBColor color)
+{
+	int index = min(i, ARR_LEN) * 3;
+	colors[index] = bounds(color.getR());
+	colors[index+1] = bounds(color.getG());
+	colors[index+2] = bounds(color.getB());
+}
 
 char pattern;
 char action;
@@ -61,10 +82,10 @@ void setup()
 	}
 
 	//pattern = PATTERN_SCROLL;
-	pattern = PATTERN_LARSON;
+	pattern = PATTERN_SCROLLSMOOTH;
 	color1 = RGBColor(255,0,0); //255 185 0
 	color2 = RGBColor(0, 0, 0); // 255 00 255
-	delayAnimationSpeed = 1250;
+	delayAnimationSpeed = 50;
 	delayHold = 0;
 	width = 5;
 }
@@ -129,6 +150,11 @@ void getSerialData()
 
 void loop()
 {
+	// debug memory
+	/*Serial.print(millis());
+	Serial.print(" Ram: ");
+	Serial.println(freeMemory());*/
+
 	//delay(5);
 	// do serial stuff
 	getSerialData();
@@ -204,12 +230,16 @@ void loop()
 			if (!strips[stripNumber].mirrored)
 			{
 				int index = c + strips[stripNumber].startIndex;
-				NeoPixels[stripNumber].setPixelColor(c, colors[index].getR(), colors[index].getG(), colors[index].getB());
+				//NeoPixels[stripNumber].setPixelColor(c, colors[index].getR(), colors[index].getG(), colors[index].getB());
+				NeoPixels[stripNumber].setPixelColor(c, (int)colors[index * 3], (int)colors[index * 3 + 1], (int)colors[index * 3 + 2]);
+				//Serial.println("A");
 			}
 			else
 			{
 				int index = strips[stripNumber].length - c + strips[stripNumber].startIndex;
-				NeoPixels[stripNumber].setPixelColor(c, colors[index].getR(), colors[index].getG(), colors[index].getB());
+				//NeoPixels[stripNumber].setPixelColor(c, colors[index].getR(), colors[index].getG(), colors[index].getB());
+				NeoPixels[stripNumber].setPixelColor(c, (int)colors[index * 3], (int)colors[index * 3 + 1], (int)colors[index * 3 + 2]);
+				//Serial.println("B");
 			}
 		}
 		NeoPixels[stripNumber].show();
@@ -238,11 +268,14 @@ void pattern_blink()
 	{
 		if (blinkToggle)
 		{
-			colors[i] = color1;
+			//colors[i] = color1;
+			setColor(i, color1);
+
 		}
 		else
 		{
-			colors[i] = color2;
+			//colors[i] = color2;
+			setColor(i, color2);
 		}
 	}
 }
@@ -251,7 +284,9 @@ void pattern_solidColor()
 {
 	for (int i = 0; i < LED_COUNT; i++)
 	{
-		colors[i] = color1;
+		//colors[i] = color1;
+		setColor(i, color1);
+
 		//strip1.setPixelColor(i, color1.getR(), color1.getG(), color1.getB());
 	}
 }
@@ -276,7 +311,8 @@ void pattern_pulse()
 	for (int i = 0; i < LED_COUNT; i++)
 	{
 		//strip1.setPixelColor(i, r, g, b);
-		colors[i] = RGBColor(r, g, b);
+		//colors[i] = RGBColor(r, g, b);
+		setColor(i, r, g, b);
 	}
 }
 
@@ -299,11 +335,12 @@ void pattern_scroll()
 			b = color2.getB();
 		}
 		//strip1.setPixelColor(i, r, g, b);
-		colors[i] = RGBColor(r, g, b);
+		//colors[i] = RGBColor(r, g, b);
+		setColor(i, r, g, b);
 	}
 }
 
-int bounds(int value)
+uint8_t bounds(int value)
 {
 	return min(255, max(0, value));
 }
@@ -315,12 +352,13 @@ void pattern_scrollsmooth()
 	{
 		double scaleA = abs(sin(PI / 2 + 2*PI * i / (double)width + millis() / delayAnimationSpeed));
 		double scaleB = abs(sin(2* PI * i / (double)width + millis() / delayAnimationSpeed));
-		char r = (char)bounds(color1.getR() * scaleA + color2.getR() * scaleB);
-		char g = (char)bounds(color1.getG() * scaleA + color2.getG() * scaleB);
-		char b = (char)bounds(color1.getB() * scaleA + color2.getB() * scaleB);
+		uint8_t r = (uint8_t)bounds(color1.getR() * scaleA + color2.getR() * scaleB);
+		uint8_t g = (uint8_t)bounds(color1.getG() * scaleA + color2.getG() * scaleB);
+		uint8_t b = (uint8_t)bounds(color1.getB() * scaleA + color2.getB() * scaleB);
 
 		//strip1.setPixelColor(i, r, g, b);
-		colors[i] = RGBColor(r, g, b);
+		//colors[i] = RGBColor(r, g, b);
+		setColor(i, r, g, b);
 	}
 }
 
@@ -344,14 +382,22 @@ void pattern_wipeLeft()
 		if (i == position)
 		{
 			if (firstColor)
-				colors[i] = color1;
+			{
+				setColor(i, color1);
+			}
 			else
-				colors[i] = color2;
+			{
+				setColor(i, color2);
+			}
+			//	colors[i] = color1;
+			//else
+			//	colors[i] = color2;
 		}
 		else
 		{
 			double decay = 0.95;
-			colors[i] = RGBColor(colors[i].getR() * decay, colors[i].getG() * decay, colors[i].getB() * decay);
+			//colors[i] = RGBColor(colors[i].getR() * decay, colors[i].getG() * decay, colors[i].getB() * decay);
+			//todo setColor(i, RGBColor(colors[i].getR() * decay, colors[i].getG() * decay, colors[i].getB() * decay));
 		}
 	}
 }
@@ -367,7 +413,8 @@ void pattern_larson()
 	for (int i = 0; i < LED_COUNT; i++)
 	{
 		//frontColors[i] = color2;
-		colors[i] = color2;
+		//colors[i] = color2;
+		setColor(i, color2);
 	}
 	
 	int onPin =(int)(LED_COUNT / 2 + ((LED_COUNT / 2) - width) * sin(PI * 2 * millis() / delayAnimationSpeed));
@@ -377,7 +424,9 @@ void pattern_larson()
 	//Serial.println(onPin);
 	for (int i = -width; i <= width; i++)
 	{
-		colors[onPin + i] = color1;
+		//colors[onPin + i] = color1;
+		setColor(onPin + i, color1);
+
 		//double amplitude = sin(PI / (double)2 * (i / (double)width));
 		////Serial.println(i);
 		//if (onPin + i > LED_COUNT_FRONT) {
@@ -441,15 +490,16 @@ void action_wipeCenter()
 
 void preset_redWhiteBlue()
 {
-	char r, g, b;
+	uint8_t r, g, b;
 	for (int i = 0; i < LED_COUNT; i++)
 	{
 		double scale3 = abs(pow(sin(PI * 2 + PI / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
 		double scale2 = abs(pow(sin(PI * 2 + PI * 2 / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
 		double scale1 = abs(pow(sin(PI * 2 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
-		r = (char)bounds(255 * scale1 + 255 * scale2);
-		g = (char)bounds(255 * scale2);
-		b = (char)bounds(255 * scale2 + 255 * scale3);
-		colors[i] = RGBColor(r, g, b);
+		r = (uint8_t)bounds(255 * scale1 + 255 * scale2);
+		g = (uint8_t)bounds(255 * scale2);
+		b = (uint8_t)bounds(255 * scale2 + 255 * scale3);
+		//colors[i] = RGBColor(r, g, b);
+		setColor(i, r, g, b);
 	}
 }

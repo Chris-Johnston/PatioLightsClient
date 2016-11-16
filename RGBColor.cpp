@@ -9,9 +9,9 @@ RGBColor::RGBColor()
 
 RGBColor::RGBColor(int red, int green, int blue)
 {
-	r = (char)clampBounds(red);
-	g = (char)clampBounds(green);
-	b = (char)clampBounds(blue);
+	r = (uint8_t)clampBounds(red);
+	g = (uint8_t)clampBounds(green);
+	b = (uint8_t)clampBounds(blue);
 }
 
 int RGBColor::getR()

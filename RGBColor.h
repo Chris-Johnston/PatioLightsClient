@@ -1,3 +1,5 @@
+#include "Arduino.h"
+
 #pragma once
 #define VALUE_MIN 0
 #define VALUE_MAX 255
@@ -12,8 +14,8 @@ public:
 	int getB();
 private:
 	int clampBounds(int);
-	char r;
-	char g;
-	char b;
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
 };
 
