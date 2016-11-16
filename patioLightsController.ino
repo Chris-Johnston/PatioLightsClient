@@ -15,7 +15,7 @@
 
 // Configuration
 #define BRIGHTNESS 10
-#define BAUD_RATE 115200
+#define BAUD_RATE 250000
 
 struct StripData {
 	int startIndex; // the starting index of the strips color data
@@ -33,7 +33,7 @@ StripData strips[NUMBER_OF_STRIPS] = {
 };
 
 #define LED_COUNT 247
-#define ARR_LEN 741 // led count * 3
+#define ARR_LEN 247*3 // led count * 3
 
 Adafruit_NeoPixel NeoPixels[NUMBER_OF_STRIPS];
 //= Adafruit_NeoPixel(STRIP1_LENGTH, STRIP1_PIN, NEO_GRB + NEO_KHZ800);
@@ -200,57 +200,29 @@ void loop()
 		break;
 	}
 
-	//// do presets (these just go over everything), special cases
-	//switch (action)
-	//{
-	//case PRESET_REDWHITEANDBLUE:
-	//	preset_redWhiteBlue();
-	//	break;
-	//default:
-	//	break;
-	//}
-	//
-
-	// update all strips at once, not as they are computed
-
 	// update the strips
 	for (int stripNumber = 0; stripNumber < NUMBER_OF_STRIPS; stripNumber++)
 	{
-		int initial =strips[stripNumber].startIndex;
-		int total = strips[stripNumber].length + strips[stripNumber].startIndex;
-		/*Serial.print("Strip");
-		Serial.print(strips[i].isFront);
-		Serial.print(strips[i].length);
-		Serial.print(strips[i].mirrored);
-		Serial.print(strips[i].pin);
-		Serial.print(strips[i].startIndex);
-		Serial.println("");*/
 		for (int c = 0; c < strips[stripNumber].length; c++)
 		{
 			if (!strips[stripNumber].mirrored)
 			{
-				int index = c + strips[stripNumber].startIndex;
+				// update normal strip
+				int index = (c + strips[stripNumber].startIndex) * 3;
 				//NeoPixels[stripNumber].setPixelColor(c, colors[index].getR(), colors[index].getG(), colors[index].getB());
-				NeoPixels[stripNumber].setPixelColor(c, (int)colors[index * 3], (int)colors[index * 3 + 1], (int)colors[index * 3 + 2]);
-				//Serial.println("A");
+				NeoPixels[stripNumber].setPixelColor(c, (int)colors[index], (int)colors[index + 1], (int)colors[index + 2]);
 			}
 			else
 			{
-				int index = strips[stripNumber].length - c + strips[stripNumber].startIndex;
+				// update mirrored strip
+				int index = (strips[stripNumber].length - c + strips[stripNumber].startIndex) * 3;
 				//NeoPixels[stripNumber].setPixelColor(c, colors[index].getR(), colors[index].getG(), colors[index].getB());
-				NeoPixels[stripNumber].setPixelColor(c, (int)colors[index * 3], (int)colors[index * 3 + 1], (int)colors[index * 3 + 2]);
-				//Serial.println("B");
+				NeoPixels[stripNumber].setPixelColor(c, (int)colors[index], (int)colors[index + 1], (int)colors[index + 2]);
 			}
 		}
 		NeoPixels[stripNumber].show();
 	}
-	/*for (int i = STRIP1_STARTINDEX; i < STRIP1_LENGTH; i++)
-	{
-		strip1.setPixelColor(i, frontColors[i].getR(), frontColors[i].getG(), frontColors[i].getB());
-	}
-	strip1.show();*/
 }
-
 
 unsigned long previousBlink = 0;
 bool blinkToggle = false;
@@ -294,7 +266,8 @@ void pattern_solidColor()
 void pattern_pulse()
 {
 	int r, g, b;
-	double scale = sin(PI * 2 * millis() / delayAnimationSpeed);
+	//double scale = sin(PI * 2 * millis() / delayAnimationSpeed);
+	double scale = triangleAbs(PI * 2 * millis() / delayAnimationSpeed);
 	if (scale > 0)
 	{
 		r = color1.getR() * scale;
@@ -350,8 +323,13 @@ void pattern_scrollsmooth()
 	// where pattern_scroll used modulus, scrollsmooth uses sin waves
 	for (int i = 0; i < LED_COUNT; i++)
 	{
-		double scaleA = abs(sin(PI / 2 + 2*PI * i / (double)width + millis() / delayAnimationSpeed));
-		double scaleB = abs(sin(2* PI * i / (double)width + millis() / delayAnimationSpeed));
+		/*double scaleA = abs(sin(PI / 2 + 2*PI * i / (double)width + millis() / delayAnimationSpeed));
+		double scaleB = abs(sin(2* PI * i / (double)width + millis() / delayAnimationSpeed));*/
+		/*double scaleA = abs(triangle(PI / 2 + 2 * PI * i / (double)width + millis() / delayAnimationSpeed));
+		double scaleB = abs(triangle(2 * PI * i / (double)width + millis() / delayAnimationSpeed));*/
+
+		double scaleA = triangleAbs(1 + i / (double)width + millis() / delayAnimationSpeed);
+		double scaleB = triangleAbs(i / (double)width + millis() / delayAnimationSpeed);
 		uint8_t r = (uint8_t)bounds(color1.getR() * scaleA + color2.getR() * scaleB);
 		uint8_t g = (uint8_t)bounds(color1.getG() * scaleA + color2.getG() * scaleB);
 		uint8_t b = (uint8_t)bounds(color1.getB() * scaleA + color2.getB() * scaleB);
@@ -360,6 +338,12 @@ void pattern_scrollsmooth()
 		//colors[i] = RGBColor(r, g, b);
 		setColor(i, r, g, b);
 	}
+}
+
+// returns from 1 to 0
+double triangleAbs(double p)
+{
+	return 1.0 - fabs(fmod(p, 2.0) - 1.0);
 }
 
 int position = 0;
@@ -451,51 +435,18 @@ void pattern_decay()
 
 }
 
-// actions
-void resetAction()
-{
-	action = ' ';
-	//actionTimer = millis();
-}
-
-void action_setColor()
-{
-
-}
-
-void action_fadeColor()
-{
-
-}
-
-void action_flash()
-{
-
-}
-
-void action_wipeLeft()
-{
-
-}
-
-void action_wipeRight()
-{
-
-}
-
-void action_wipeCenter()
-{
-
-}
-
 void preset_redWhiteBlue()
 {
 	uint8_t r, g, b;
 	for (int i = 0; i < LED_COUNT; i++)
 	{
-		double scale3 = abs(pow(sin(PI * 2 + PI / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
-		double scale2 = abs(pow(sin(PI * 2 + PI * 2 / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
-		double scale1 = abs(pow(sin(PI * 2 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
+		//double scale3 = abs(pow(sin(PI * 2 + PI / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
+		//double scale2 = abs(pow(sin(PI * 2 + PI * 2 / 3 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
+		//double scale1 = abs(pow(sin(PI * 2 + PI / (double)width * i + millis() / delayAnimationSpeed), 3));
+		double p = i / (double)width;
+		double scale3 = pow(triangleAbs(p + millis() / delayAnimationSpeed), 2);
+		double scale2 = pow(triangleAbs(0.66 + p + millis() / delayAnimationSpeed), 2);
+		double scale1 = pow(triangleAbs(1.33 + p + millis() / delayAnimationSpeed), 2);
 		r = (uint8_t)bounds(255 * scale1 + 255 * scale2);
 		g = (uint8_t)bounds(255 * scale2);
 		b = (uint8_t)bounds(255 * scale2 + 255 * scale3);
