@@ -83,9 +83,9 @@ void setup()
 
 	//pattern = PATTERN_SCROLL;
 	pattern = PATTERN_SCROLLSMOOTH;
-	color1 = RGBColor(255,0,0); //255 185 0
-	color2 = RGBColor(0, 0, 0); // 255 00 255
-	delayAnimationSpeed = 50;
+	color1 = RGBColor(0,255,0); 
+	color2 = RGBColor(0, 0, 255);
+	delayAnimationSpeed = 150;
 	delayHold = 0;
 	width = 5;
 }
