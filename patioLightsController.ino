@@ -66,12 +66,14 @@ double delayHold;
 bool actionRunning;
 int width;
 
-char serialBuffer[30];
+#define SERIALMESSAGELENGTH 37
+char serialBuffer[37];
 
 void setup()
 {
 	Serial.begin(BAUD_RATE);
-	Serial.println("Start");
+	//Serial.println("Start");
+	Serial.setTimeout(100);
 
 	// initialize the strips
 	for (int i = 0; i < NUMBER_OF_STRIPS; i++)
@@ -85,77 +87,153 @@ void setup()
 	pattern = PATTERN_SCROLLSMOOTH;
 	color1 = RGBColor(0,255,0); 
 	color2 = RGBColor(0, 0, 255);
-	delayAnimationSpeed = 150;
+	delayAnimationSpeed = 500;
 	delayHold = 0;
-	width = 5;
+	width = 7;
 }
+
+// so it turns out that disabling interrupts by the neopixel library causes issues for serial.read
+// https://learn.adafruit.com/neopixels-and-servos/overview#the-root-of-the-problem
+
+// issue with serialEvent
+// data wasn't being sent over correctly when neopixel show was being used
+//void serialEvent()
+//{
+//	getSerialData();
+//}
 
 void getSerialData()
 {
+	// I could only draw when I send a draw command but that's slow
+	// also if I did anything where the arduino cannot work alone, that means that it needs the script running full time, which is no good
+
+	//Serial.println("Ser Data");
+	//noInterrupts();
+	//memset(serialBuffer, 0, 30);
 	// if serial contains data
 	if (Serial.available() > 0)
 	{
-		// set the buffer to the next line of input
-		//serialBuffer = Serial.readStringUntil('\n');
-		Serial.readBytesUntil('\n', serialBuffer, 30);
-		Serial.flush();
-
-		/*int indexStart = serialBuffer.indexOf(START_OF_MESSAGE);
-		int indexEnd = serialBuffer.indexOf(END_OF_MESSAGE);
-		int stripNumToChange = 0;
-
-		if (indexStart != -1 &&
-			indexEnd != -1 &&
-			indexStart < indexEnd)*/
-		if(serialBuffer[0] == START_OF_MESSAGE[0])
+		String s;
+		// when serial data arrives, I'm going to flood it with useless data just so I know that serial is coming in
+		// then remove that data and send the legit data
+		if (Serial.read() == 'x')
 		{
-			// message contains all of the data
-			//serialBuffer = serialBuffer.substring(indexStart + String(START_OF_MESSAGE).length(), indexEnd);
-			for (int i = 0; i < 25; i++)
+			//Serial.flush();
+			/*Serial.println("Useless data found. Waiting for more.");
+			Serial.println("Useless data found. Waiting for more.");
+			Serial.println("Useless data found. Waiting for more.");
+			Serial.println("Useless data found. Waiting for more.");*/
+
+			Serial.flush();
+
+			while (!(Serial.available() > 0))
+			//while (Serial.available() < 1)
 			{
-				serialBuffer[i] = serialBuffer[i + 5];
+				//Serial.println(Serial.peek());
 			}
+			//Serial.println(Serial.peek());
+			//s = Serial.readString();
+			s = Serial.readString();
+			
+			// set the buffer to the next line of input
 
-			//pattern = serialBuffer.charAt(0);
-			pattern = serialBuffer[0];
-			action = pattern;
-			//Serial.println(pattern);
+			//String s = Serial.readString();
+			//Serial.println(s);
+			int iLeft, iRight;
+			iLeft = s.indexOf('s');
+			iRight = s.indexOf('e');
+			s = s.substring(iLeft, iRight);
+			s.toCharArray(serialBuffer, SERIALMESSAGELENGTH);
 
-			/*int r = serialBuffer.substring(1, 4).toInt();
-			int g = serialBuffer.substring(4, 7).toInt();
-			int b = serialBuffer.substring(7, 10).toInt();
-			int r2 = serialBuffer.substring(10, 13).toInt();
-			int g2 = serialBuffer.substring(13, 16).toInt();
-			int b2 = serialBuffer.substring(16, 19).toInt();*/
-			int r = ((String)"" + serialBuffer[1] + serialBuffer[2] + serialBuffer[3]).toInt();
-			int g = ((String)"" + serialBuffer[4] + serialBuffer[5] + serialBuffer[6]).toInt();
-			int b = ((String)"" + serialBuffer[7] + serialBuffer[8] + serialBuffer[9]).toInt();
+			//Serial.println(s);
+			//Serial.println(serialBuffer);
+			Serial.flush();
 
-			int r2 = ((String)"" + serialBuffer[10] + serialBuffer[11] + serialBuffer[12]).toInt();
-			int g2 = ((String)"" + serialBuffer[13] + serialBuffer[14] + serialBuffer[15]).toInt();
-			int b2 = ((String)"" + serialBuffer[16] + serialBuffer[17] + serialBuffer[18]).toInt();
+			/*int indexStart = serialBuffer.indexOf(START_OF_MESSAGE);
+			int indexEnd = serialBuffer.indexOf(END_OF_MESSAGE);
+			int stripNumToChange = 0;
+
+			if (indexStart != -1 &&
+				indexEnd != -1 &&
+				indexStart < indexEnd)*/
+			if (serialBuffer[0] == START_OF_MESSAGE)
+			{
+				//Serial.println("lkjsdflkjd");
+				// message contains all of the data
+				//serialBuffer = serialBuffer.substring(indexStart + String(START_OF_MESSAGE).length(), indexEnd);
+				for (int i = 0; i < SERIALMESSAGELENGTH; i++)
+				{
+					serialBuffer[i] = serialBuffer[i + 1];
+				}
+
+				Serial.println(serialBuffer);
+
+				//pattern = serialBuffer.charAt(0);
+				char tempPattern = serialBuffer[0];
+				//Serial.println(pattern);
+				/*action = pattern;*/
+				//Serial.println(pattern);
+
+				/*int r = serialBuffer.substring(1, 4).toInt();
+				int g = serialBuffer.substring(4, 7).toInt();
+				int b = serialBuffer.substring(7, 10).toInt();
+				int r2 = serialBuffer.substring(10, 13).toInt();
+				int g2 = serialBuffer.substring(13, 16).toInt();
+				int b2 = serialBuffer.substring(16, 19).toInt();*/
+				int r = ((String)"" + serialBuffer[1] + serialBuffer[2] + serialBuffer[3]).toInt();
+				int g = ((String)"" + serialBuffer[4] + serialBuffer[5] + serialBuffer[6]).toInt();
+				int b = ((String)"" + serialBuffer[7] + serialBuffer[8] + serialBuffer[9]).toInt();
+
+				int r2 = ((String)"" + serialBuffer[10] + serialBuffer[11] + serialBuffer[12]).toInt();
+				int g2 = ((String)"" + serialBuffer[13] + serialBuffer[14] + serialBuffer[15]).toInt();
+				int b2 = ((String)"" + serialBuffer[16] + serialBuffer[17] + serialBuffer[18]).toInt();
 
 
-			color1 = RGBColor(r, g, b);
-			color2 = RGBColor(r2, g2, b2);
-			//delayAnimationSpeed = serialBuffer.substring(19, 23).toInt();
-			delayAnimationSpeed = ((String)"" + serialBuffer[19] + serialBuffer[20] + serialBuffer[21] + serialBuffer[22]).toInt();
-			//delayHold = serialBuffer.substring(23, 27).toInt();
-			delayHold = ((String)"" + serialBuffer[23] + serialBuffer[24] + serialBuffer[25] + serialBuffer[26]).toInt();
-			//width = serialBuffer.substring(27, 30).toInt();
-			delayAnimationSpeed = ((String)"" + serialBuffer[27] + serialBuffer[28] + serialBuffer[29]).toInt();
+				/*RGBColor tempColor1 = RGBColor(r, g, b);
+				RGBColor tempColor2 = RGBColor(r2, g2, b2);
+*/
+				//Serial.println("c1" + r + g + b);
+				//Serial.println("c2" + r2 + g2 + b2);
+
+				//delayAnimationSpeed = serialBuffer.substring(19, 23).toInt();
+				int tempDelayAnimationSpeed = ((String)"" + serialBuffer[19] + serialBuffer[20] + serialBuffer[21] + serialBuffer[22]).toInt();
+				//Serial.println(delayAnimationSpeed);
+				//delayHold = serialBuffer.substring(23, 27).toInt();
+				int tempDelayHold = ((String)"" + serialBuffer[23] + serialBuffer[24] + serialBuffer[25] + serialBuffer[26]).toInt();
+				//Serial.println(delayHold);
+				//width = serialBuffer.substring(27, 30).toInt();
+				int tempWidth = ((String)"" + serialBuffer[27] + serialBuffer[28] + serialBuffer[29]).toInt();
+				//Serial.println(width);
+
+				// checksum
+				int val = (int)(r + g + b + r2 + g2 + b2 + tempDelayAnimationSpeed + tempDelayHold + tempWidth) % 99;
+				int chk = ((String)"" + serialBuffer[30] + serialBuffer[31]).toInt();
+				// 99 override value so I can still type things in by hand
+				if (chk == val || chk==99)
+				{
+					// checksum matches and set the values
+					pattern = tempPattern;
+					color1 = RGBColor(r, g, b);
+					color2 = RGBColor(r2, g2, b2);
+					delayAnimationSpeed = tempDelayAnimationSpeed;
+					delayHold = tempDelayHold;
+					width = tempWidth;
+				}
+			}
 		}
 	}
+	interrupts();
 }
 
 void loop()
 {
+	//noInterrupts();
 	// debug memory
 	/*Serial.print(millis());
 	Serial.print(" Ram: ");
 	Serial.println(freeMemory());*/
 
-	//delay(5);
+	//delay(20);
 	// do serial stuff
 	getSerialData();
 	// iterate through strips and do their stuff
@@ -200,6 +278,7 @@ void loop()
 		break;
 	}
 
+	//noInterrupts();
 	// update the strips
 	for (int stripNumber = 0; stripNumber < NUMBER_OF_STRIPS; stripNumber++)
 	{
@@ -220,8 +299,11 @@ void loop()
 				NeoPixels[stripNumber].setPixelColor(c, (int)colors[index], (int)colors[index + 1], (int)colors[index + 2]);
 			}
 		}
+		noInterrupts();
 		NeoPixels[stripNumber].show();
+		interrupts();
 	}
+	interrupts();
 }
 
 unsigned long previousBlink = 0;
