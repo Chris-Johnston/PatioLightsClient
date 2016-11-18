@@ -2,8 +2,8 @@
 // Defined patterns - incrementing numbers
 // patterns will loop indefinitely
 
-#define START_OF_MESSAGE "start"
-#define END_OF_MESSAGE "end"
+#define START_OF_MESSAGE 's'
+#define END_OF_MESSAGE 'e'
 // solid color
 #define PATTERN_SOLIDCOLOR '0'
 // blink on/off two colors
