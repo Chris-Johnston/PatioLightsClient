@@ -50,12 +50,16 @@ and `PORT` to match your configuration.
   
 4. Upload to the Arduino using `make`.
 
+5. Restart the Host program, either by rebooting the Pi, or starting the script manually.
+
 ### How I used NeoPixels and Serial.Read
 
 Both the Adafruit_NeoPixel and FastLED libraries have the same issue with Neopixels. Due to their unique timing, drawing the colors to
 them must be done with `noInterrupts()` (called internally). This is fine for normal use, but other operations like reading from Serial
 depend on interrupts to function properly. When drawing a small number of leds this didn't cause many issues, but when scaled up to 
 several hundred, it did. I noticed that strings sent over Serial were dropping bytes and were unreliable.
+
+This is described in the [FastLED wiki](https://github.com/FastLED/FastLED/wiki/Interrupt-problems).
 
 #### My ~~hack~~ solution:
 
