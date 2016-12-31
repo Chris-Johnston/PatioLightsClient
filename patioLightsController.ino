@@ -509,43 +509,50 @@ void pattern_larson()
 	}
 }
 
+long lastUpdate = 0;
+
 void pattern_randBlink()
 {
-	// turn everything color2
-	for (int i = 0; i < LED_COUNT; i++)
+	if ((millis() - lastUpdate) > delayAnimationSpeed)
 	{
-		setColor(i, color2);
-	}
+		// turn everything color2
+		for (int i = 0; i < LED_COUNT; i++)
+		{
+			setColor(i, color2);
+		}
 
-	// turn random ones to color1
-	for (int i = 0; i < width; i++)
-	{
-		setColor(random(0, LED_COUNT), color1);
+		// turn random ones to color1
+		for (int i = 0; i < width; i++)
+		{
+			setColor(random(0, LED_COUNT), color1);
+		}
 	}
-	delay(delayAnimationSpeed);
 }
 
 void pattern_decay()
 {
-	int decayAmt = 100.0 * 255 / delayAnimationSpeed;
-	// decay everything by a bit
-	for (int i = 0; i < LED_COUNT; i++)
+	// I think the delay was screwing up serial as I could no longer message it
+	if ((millis() - lastUpdate) > delayAnimationSpeed)
 	{
-		// todo write a getter for colors
-		RGBColor startColor = RGBColor(colors[3 * i], colors[3 * i + 1], colors[3 * i + 2]);
-		int r, g, b;
-		r = startColor.getR() - decayAmt;
-		g = startColor.getG() - decayAmt;
-		b = startColor.getB() - decayAmt;
-		setColor(i, r, g, b);
-	}
+		int decayAmt = 100.0 * 255 / delayAnimationSpeed;
+		// decay everything by a bit
+		for (int i = 0; i < LED_COUNT; i++)
+		{
+			// todo write a getter for colors
+			RGBColor startColor = RGBColor(colors[3 * i], colors[3 * i + 1], colors[3 * i + 2]);
+			int r, g, b;
+			r = startColor.getR() - decayAmt;
+			g = startColor.getG() - decayAmt;
+			b = startColor.getB() - decayAmt;
+			setColor(i, r, g, b);
+		}
 
-	// turn random ones to color1
-	for (int i = 0; i < width; i++)
-	{
-		setColor(random(0, LED_COUNT), color1);
+		// turn random ones to color1
+		for (int i = 0; i < width; i++)
+		{
+			setColor(random(0, LED_COUNT), color1);
+		}
 	}
-	delay(delayAnimationSpeed);
 }
 
 void preset_redWhiteBlue()
