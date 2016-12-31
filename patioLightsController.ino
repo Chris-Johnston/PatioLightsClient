@@ -51,7 +51,7 @@ void setColor(int i, int r, int g, int b)
 
 void setColor(int i, RGBColor color)
 {
-	int index = min(i, ARR_LEN) * 3;
+	int index = min(max(0, i), ARR_LEN) * 3;
 	colors[index] = bounds(color.getR());
 	colors[index+1] = bounds(color.getG());
 	colors[index+2] = bounds(color.getB());
@@ -247,7 +247,7 @@ void loop()
 		pattern_blink();
 		break;
 	case PATTERN_DECAY:
-		//pattern_decay();
+		pattern_decay();
 		break;
 	case PATTERN_LARSON:
 		pattern_larson();
@@ -374,7 +374,8 @@ void pattern_pulse()
 void pattern_scroll()
 {
 	int r, g, b;
-	int offset = millis() / delayAnimationSpeed;
+	// hopefully this fixes the bug where everything would go to one of the colors.
+	long offset = millis() / delayAnimationSpeed;
 	for (int i = 0; i < LED_COUNT; i++)
 	{
 		if ((i + offset) / width % 2 == 1)
@@ -402,6 +403,7 @@ uint8_t bounds(int value)
 
 void pattern_scrollsmooth()
 {
+	// todo resolve issue with first pixel not being updated for some reason
 	// where pattern_scroll used modulus, scrollsmooth uses sin waves
 	for (int i = 0; i < LED_COUNT; i++)
 	{
@@ -509,12 +511,41 @@ void pattern_larson()
 
 void pattern_randBlink()
 {
+	// turn everything color2
+	for (int i = 0; i < LED_COUNT; i++)
+	{
+		setColor(i, color2);
+	}
 
+	// turn random ones to color1
+	for (int i = 0; i < width; i++)
+	{
+		setColor(random(0, LED_COUNT), color1);
+	}
+	delay(delayAnimationSpeed);
 }
 
 void pattern_decay()
 {
+	int decayAmt = 100.0 * 255 / delayAnimationSpeed;
+	// decay everything by a bit
+	for (int i = 0; i < LED_COUNT; i++)
+	{
+		// todo write a getter for colors
+		RGBColor startColor = RGBColor(colors[3 * i], colors[3 * i + 1], colors[3 * i + 2]);
+		int r, g, b;
+		r = startColor.getR() - decayAmt;
+		g = startColor.getG() - decayAmt;
+		b = startColor.getB() - decayAmt;
+		setColor(i, r, g, b);
+	}
 
+	// turn random ones to color1
+	for (int i = 0; i < width; i++)
+	{
+		setColor(random(0, LED_COUNT), color1);
+	}
+	delay(delayAnimationSpeed);
 }
 
 void preset_redWhiteBlue()
